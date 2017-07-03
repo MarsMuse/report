@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+
+    <title>table</title>
+
+    <link  rel="stylesheet"  href="js/bootstrap/3.3.7/css/bootstrap.min.css" >
+    <link  rel="stylesheet"  href="js/bootstrap-table/1.11.1/dist/bootstrap-table.min.css" rel="stylesheet">
+    <link  rel="stylesheet"  href="js/font-awesome/4.3.0/css/font-awesome.css" rel="stylesheet">
+    <link href="css/main-monkey.css" rel="stylesheet">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="main-content-self">
+    <div  class="content-page-title-v1"></div>
+    <ol class="breadcrumb  ">
+      <!-- <span  class="glyphicon glyphicon-home"></span> -->
+      <li>当前位置：<a href="#">首页</a></li>
+      <li class="active">列表页面</li>
+    </ol>
+    
+      <div class="left-menu-content-slef" >
+        <div style="height: 100%;"  id="fm-list-menu"></div>
+        &nbsp;
+      </div>
+      
+      
+      <div id="appWorkSpaceByZhPH"  class="right-work-content-self">
+        <div class="container-fluid">
+          <div class="row">
+            <div class="panel panel-primary">
+              <div class="panel-heading">
+                <h3 class="panel-title">查询条件</h3>
+              </div>
+              <div class="panel-body">
+                <form class="form-inline">
+                  <div class="row">
+                    <div class="col-md-3 col-md-offset-1"> 
+                      <div class="form-group">
+                        <label for="exampleInputName2">Name</label>
+                        <input type="text" class="form-control" id="exampleInputName2" >
+                      </div>
+                    </div>
+                    <div class="col-md-3 col-md-offset-1">
+                      <div class="form-group">
+                        <label for="exampleInputEmail2">phone</label>
+                        <input type="email" class="form-control" id="exampleInputEmail2" >
+                      </div>
+                    </div>
+                    <div class="col-md-3"> 
+                      <div class="form-group">
+                        <label for="exampleInputEmail2">Email</label>
+                        <input type="email" class="form-control" id="exampleInputEmail2" >
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+            <div id="toolbar1">
+                <button type="button" class="btn btn-primary" onclick="queryDataByButton()"><span  class="glyphicon glyphicon-search  table-span-icon"></span>查询</button>
+                <button type="button" class="btn btn-success" onclick="addDataByButton()"><span  class="glyphicon glyphicon-plus  table-span-icon"></span>新增</button>
+                <button type="button" class="btn btn-info" onclick="exportDataByButton()"><span  class="glyphicon glyphicon-download-alt  table-span-icon"></span>导出</button>
+            </div>
+            <!-- 表格内容-->
+            <table  id="dataInforTable"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="js/jquery/jquery.js"></script>
+    <script src="js/colResizable/1.6/colResizable-1.6.min.js"></script>
+    <script src="js/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="js/bootstrap-table/1.11.1/dist/bootstrap-table.js"></script>
+    <script src="js/bootstrap-table/1.11.1/dist/extensions/resizable/bootstrap-table-resizable.min.js"></script>
+    <script src="js/bootstrap-table/1.11.1/dist/locale/bootstrap-table-zh-CN.js"></script>
+    <script src="js/superfish/1.7.9/js/hoverIntent.js"></script>
+     <script src="js/superfish/1.7.9/js/superfish.js"></script>
+    <script src="js/main-monkey.js"></script>
+    <script >       
+        $(function(){
+           //查询列表数据的函数 
+           getAreaData  =  function(gridHandler , page){
+               
+               $.ajax({
+                   url:"http://127.0.0.1:8080/StreamMars/action/tablecontroller/areainfor",
+                   method:"post",
+                   data:page,
+                   dataType:"json"
+               }).success(gridHandler).error(function(){
+                   console.log("获取数据异常")
+               }); 
+           };
+           
+           
+           
+           getMenuData = function(menuList){
+               
+               $.ajax({
+                   url:"http://127.0.0.1:8080/StreamMars/action/tablecontroller/menuinfor",
+                   method:"post",
+                   dataType:"json"
+               }).success(menuList).error(function(){
+                   console.log("获取数据异常")
+               }); 
+           };
+          
+           var menu = new fmListMenu();
+           menu.init({dataHandler : getMenuData});
+           //表格渲染对象
+             var tba = new TableByAjax();
+             //渲染参数
+             var tbOptions = {
+                 uniqueId : 'areaCode',
+                 method : 'post',
+                 toolbar : '#toolbar1',
+                 //resizable:true, //注：如果要求启用resizable 一定要将paginationVAlign设置为top，否则在部分版本的chrome中出现table水平滚动轴与分页栏部分重合的情况
+                 columns : [
+                                {
+                                    title: '序号',//标题  可不加  
+                                    width:"60px",
+                                    formatter: function (value, row, index) {  
+                                        console.log(tba.currentOffset);
+                                        return tba.currentOffset+index+1;
+                                    }
+                                },
+                           {
+                               field: 'checked',
+                               width:"40px",
+                               checkbox: true ,//注 ： 若是单选则为radio:true，并且将tbOptions.clickToSelect :true
+                               class:"check-middle-td" // 注：由于td内部子元素的影响 valign:'middle'这种居中方式无效 需要自己写一个class 在此引入，即可规避该 td的纵向居中问题
+                           },
+                           {
+                               title: 'Number',//标题  可不加  
+                               width:"200px",
+                               formatter: function (value, row, index) {  
+                                   return index+1;  
+                               }
+                           },
+                          {
+                              field: 'areaCode',
+                              width:"800px",
+                              title: '区域编码'
+                          },
+                          {
+                              field: 'areaName',
+                              width:"800px",
+                              title: '区域名称'
+                          },
+                          {
+                              field: 'areaPath',
+                              width:"800px",
+                              title: '区域路径'
+                          },
+                          {
+                              field: 'areaCode',
+                              title: '操作',
+                              width:"200px",
+                              formatter:function(value , rowEntity , index){
+                                  
+                                  return'<button type="button" class="btn btn-success  btn-sm  "  onclick="editData(\''+value+'\')"   style="margin-right:12px;"><span  class="glyphicon glyphicon-edit  table-span-icon"></span>修改</button>'
+                                              +'<button type="button" class="btn btn-info  btn-sm"  onclick="showDetailInfor(\''+value+'\')"><span  class="glyphicon glyphicon-th  table-span-icon"></span>详情</button>';
+                              }
+                          },
+                          ],
+                 rowStyle:function(rowEntity , index){
+                     if(rowEntity.areaCode == "110000"){
+                         return {classes:'danger'};
+                     }
+                     else{
+                         return {};
+                     }
+                 }
+             };
+             
+             //表格初始化配置
+             var tbControl = {
+                     dataHandler :getAreaData,
+                     options:tbOptions
+             };
+             //获取到表格控制器
+            var gridController = tba.grid("dataInforTable" , tbControl);
+             
+            
+            //查询按钮点击事件触发函数
+             queryDataByButton = function(){
+                 gridController.query();
+             }
+             
+            //编辑数据按钮点击事件触发函数
+             editData = function(code){
+                 console.log("当前Code:"+code);
+             };
+             //查看详情触发函数
+             showDetailInfor= function(code){
+                 console.log("当前Code:"+code);
+             };
+             //新增数据
+             addDataByButton  =  function(){
+                 console.log("新增数据");
+             }
+             //导出数据
+             exportDataByButton  =  function(){
+                 console.log(gridController.getSelections());
+             }
+        });
+    </script>
+  </body>
+</html>

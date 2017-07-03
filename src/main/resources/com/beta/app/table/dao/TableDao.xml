@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beta.app.table.dao.TableDao">
+
+    <select  id="getListForChargeInfor"   parameterType="java.util.Map"  resultType="com.beta.app.table.entity.ChargeInfor">
+        SELECT ID AS id  ,rri.loan_no AS loanNo ,rri.loan_name AS  loanName,
+            rri.charge_date AS chargeDate ,rri.charge_result AS chargeResult,
+            rri.charge_lose_reason AS chargeLoseReason, rri.charge_channel AS chargeChannel,
+            rri.source_table AS chargeType , rri.branch_org as branchOrg
+        FROM REPORT_RESLOVE_INFO rri
+        where 1=1
+        <if test="parameter.synDate != null and  parameter.synDate !='' ">
+            and charge_date like '%'|| #{parameter.synDate} ||'%'
+        </if>
+    </select>
+    
+    
+    <select  id="getBatchSynedInfor"   parameterType="java.util.Map"  resultType="java.lang.String">
+        SELECT ri.pri_number AS priNumber 
+            FROM REPORT_ZJ_BATCH_BACUK   ri 
+            WHERE  1=1 
+            and  ri.request_no = '4'
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(ri.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+    </select>
+    
+    <select  id="getSingleSynedInfor"   parameterType="java.util.Map"  resultType="java.lang.String">
+        SELECT ri.pri_number AS priNumber 
+            FROM REPORT_INTERFACE_LOG_BACK  ri 
+            WHERE  1=1 
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(ri.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+    </select>
+    
+    
+    
+    <insert id="insertSynBatchInfor"  parameterType="java.util.List">
+        <foreach collection="batchList" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_ZJ_BATCH_BACUK 
+                (     
+                        PRI_NUMBER ,REQUEST_NO , 
+                       BATCH_NO ,INTERFACE_CONTENT ,
+                       CREATE_DATE , CREATE_NAME 
+                       
+                )
+                       
+                VALUES
+                (
+                    #{item.priNumber} ,#{item.requestNo} ,
+                    #{item.batchNo} ,#{item.interfaceContent} ,
+                    #{item.createDate} ,#{item.createName}
+                )
+       </foreach>
+    </insert>
+    
+    
+    <insert id="insertSynSingleInfor"  parameterType="java.util.List">
+        <foreach collection="singleList" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_INTERFACE_LOG_BACK 
+                (     
+                        PRI_NUMBER   ,    INTERFACE_CONTENT  ,
+                       CREATE_DATE  ,     CREATE_NAME   ,
+                       LOAN_CONTRACT_NO   ,   SEQ   ,
+                       STATUS   ,   BRANCH_ORG  ,
+                       LOAN_NAME
+                )
+                       
+                VALUES
+                (
+                    #{item.priNumber}   , #{item.interfaceContent} ,
+                    #{item.createDate} ,   #{item.createName} ,
+                    #{item.loanContractNo} ,  #{item.seq} ,
+                    #{item.status}  ,   #{item.branchOrg}  ,
+                    #{item.loanName}
+                )
+       </foreach>
+    </insert>
+    
+    
+        <select  id="getBatchInforToReslove"   parameterType="java.util.Map"  resultType="com.beta.app.remote.entity.BatchChargeEntity">
+            SELECT ri.pri_number AS priNumber ,ri.request_no AS requestNo ,
+                   ri.batch_no AS batchNo  , ri.interface_content AS interfaceContent,
+                   ri.create_date  AS createDate , ri.create_name AS createName
+            FROM REPORT_ZJ_BATCH_BACUK  ri 
+            WHERE  1=1 
+             and RESLOVE_FLAG = '0' 
+             and FLAG = '1'
+            and  ri.request_no = '4'
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(ri.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+    </select>
+    
+    
+    <select  id="getSingleInforToReslove"   parameterType="java.util.Map"  resultType="com.beta.app.remote.entity.SingleChargeEntity">
+            SELECT li.pri_number  AS priNumber , li.loan_contract_no  AS loanContractNo ,
+                   li.seq AS seq , li.interface_content AS interfaceContent ,
+                   li.create_date AS  createDate , li.create_name AS createName ,
+                   li.status  AS status ,li.branch_org  as branchOrg , li.loan_name as loanName
+            FROM REPORT_INTERFACE_LOG_BACK li
+            
+            WHERE  1=1 
+            and RESLOVE_FLAG = '0' 
+             and FLAG = '1'
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(li.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+    </select>
+    
+    
+    
+    
+    
+    <select  id="getMenuInfor"   parameterType="java.util.Map"  resultType="com.beta.app.table.entity.MenuInfor">
+        SELECT id , PARENT_ID AS parentId ,NAME AS NAME ,
+            URL AS url , ICON AS icon , DISPLAY_ORDER AS displayOrder ,
+            PATH AS path , NOTE AS note , LOCKED AS locked 
+        
+         FROM stf_res_menu
+    </select>
+    
+    <insert id="insertBatchResloveData"  parameterType="java.util.List">
+        
+        <foreach collection="zjBatchAllInfor" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_RESLOVE_INFO 
+                (     
+                        id      ,      loan_no     ,         loan_name  ,
+                        charge_date     ,        charge_result  ,
+                        charge_lose_reason  , charge_channel   ,
+                        account_number  , amount    ,
+                        branch_org , source_table , RESLOVE_DATE ,
+                        charge_code
+                )
+                       
+                VALUES
+                (
+                    sys_guid() ,    #{item.itemNo}  ,   #{item.accountName} ,
+                    #{item.bankTxTime}  , #{item.status}   ,
+                    #{item.responseMessage} ,    #{item.chargeChannel}   ,
+                    #{item.accountNumber}   ,  #{item.amount}    ,
+                    #{item.branchOrg}    , 'REPORT_ZJ_BATCH_BACUK' ,SYSDATE ,
+                    #{item.chargeCode}
+                )
+       </foreach>
+        
+    </insert>
+    
+        <insert id="insertZjSingleCharge"  parameterType="java.util.List">
+        
+        <foreach collection="zjSingle" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_RESLOVE_INFO 
+                (     
+                        id      ,      loan_no     ,         loan_name  ,
+                        charge_date     ,        charge_result  ,
+                        charge_lose_reason  , charge_channel   ,
+                        branch_org , source_table  ,RESLOVE_DATE ,
+                        charge_code
+                )
+                       
+                VALUES
+                (
+                    sys_guid() ,    #{item.loanNo ,jdbcType=VARCHAR}  ,   #{item.loanName ,jdbcType=VARCHAR} ,
+                    #{item.bankTxTime ,jdbcType=VARCHAR}  , #{item.status ,jdbcType=VARCHAR}   ,
+                    #{item.responseMessage ,jdbcType=VARCHAR} ,    #{item.chargeChannel ,jdbcType=VARCHAR}   ,
+                    #{item.branchOrg ,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK' ,SYSDATE ,
+                    #{item.chargeCode}
+                )
+       </foreach>
+        
+    </insert>
+    
+        <insert id="insertAnSingleCharge"  parameterType="java.util.List">
+        
+        <foreach collection="anSingle" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_RESLOVE_INFO 
+                (     
+                        id      ,      loan_no     ,         loan_name  ,
+                        charge_date     ,        charge_result  ,
+                        charge_lose_reason  , charge_channel   ,
+                        branch_org , source_table  , RESLOVE_DATE ,
+                        charge_code
+                )
+                       
+                VALUES
+                (
+                    sys_guid() ,    #{item.loanNo,jdbcType=VARCHAR}  ,   #{item.loanName,jdbcType=VARCHAR} ,
+                    #{item.succTime,jdbcType=VARCHAR}  , #{item.respCode,jdbcType=VARCHAR}   ,
+                    #{item.respMsg,jdbcType=VARCHAR} ,    #{item.chargeChannel,jdbcType=VARCHAR}   ,
+                    #{item.branchOrg,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK'  ,  SYSDATE ,
+                    #{item.chargeCode}
+                )
+       </foreach>
+        
+    </insert>
+    
+        <insert id="insertBfSingleCharge"  parameterType="java.util.List">
+        
+        <foreach collection="bfSingle" item="item" index="index" separator=";" open="begin" close=";end;" >
+                INSERT INTO REPORT_RESLOVE_INFO 
+                (     
+                        id      ,      loan_no     ,         loan_name  ,
+                        charge_date     ,        charge_result  ,
+                        charge_lose_reason  , charge_channel   ,
+                        branch_org , source_table  ,  RESLOVE_DATE ,
+                        charge_code
+                )
+                       
+                VALUES
+                (
+                    sys_guid() ,    #{item.loanNo,jdbcType=VARCHAR}  ,   #{item.loanName,jdbcType=VARCHAR} ,
+                    #{item.trade_date,jdbcType=VARCHAR}  , #{item.resp_code,jdbcType=VARCHAR}   ,
+                    #{item.resp_msg,jdbcType=VARCHAR} ,    #{item.chargeChannel,jdbcType=VARCHAR}   ,
+                    #{item.branchOrg,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK'  ,  SYSDATE ,
+                    #{item.chargeCode}
+                )
+       </foreach>
+        
+    </insert>
+    
+    
+    
+    <update id="updateBatchResloveFlag"  parameterType="java.util.List">
+        UPDATE REPORT_ZJ_BATCH_BACUK a 
+        SET RESLOVE_FLAG = '1' 
+        WHERE EXISTS (
+                    SELECT priNumber AS priNumber FROM
+                    
+                    <foreach item="item" index="index" collection="resloveBatchList" 
+                         open="(" separator="union all" close=")  listData" > 
+                         select  #{item.priNumber}  as  priNumber  from dual
+                </foreach>
+                
+                    where a.pri_number =listData.priNumber
+                    
+                 )
+    </update>
+    
+    
+<!--     
+    <update id="updateSingleResloveFlag"  parameterType="java.util.List">
+            UPDATE REPORT_INTERFACE_LOG_BACK a 
+            SET RESLOVE_FLAG = '1' 
+            WHERE EXISTS (
+                        SELECT priNumber AS priNumber FROM
+                        
+                        <foreach item="item" index="index" collection="resloveSingleList" 
+                             open="(" separator="union all" close=")  listData" > 
+                             select  #{item.priNumber}  as  priNumber  from dual
+                    </foreach>
+                    
+                        where a.pri_number =listData.priNumber
+                        
+                     )
+    </update> -->
+    
+        <update id="updateSingleResloveFlag"  parameterType="java.util.List">
+            <foreach  collection="resloveSingleList"   item="item" index="index" separator=";" open="begin" close=";end;"> 
+                  UPDATE REPORT_INTERFACE_LOG_BACK 
+                  SET RESLOVE_FLAG = '1' 
+                  WHERE  pri_number = #{item.priNumber}
+        </foreach>
+    </update>
+</mapper>

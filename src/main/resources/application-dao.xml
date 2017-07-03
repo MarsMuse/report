@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:context="http://www.springframework.org/schema/context"
+xmlns:tx="http://www.springframework.org/schema/tx"
+xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/tx
+http://www.springframework.org/schema/tx/spring-tx.xsd">
+    
+    <description>数据库连接配置</description>
+    
+    <!-- 扫描service、dao组件 -->
+    <context:component-scan base-package="com.beta.**.dao" />
+    <!-- 分解配置 jdbc.properites -->
+    <context:property-placeholder location="classpath:config/jdbc.properties" />
+
+    <bean id="financial_dataSource" class="com.atomikos.jdbc.nonxa.AtomikosNonXADataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="financialuser" />
+        <property name="driverClassName" value="${financial.driverClassName}" />
+        <property name="url" value="${financial.url}" />
+        <property name="user" value="${financial.username}" />
+        <property name="password" value="${financial.password}" />
+        <property name="poolSize" value="5" />
+
+        <property name="minPoolSize" value="5" />
+        <property name="maxPoolSize" value="20" />
+        <property name="maxIdleTime" value="60" />
+        <property name="reapTimeout" value="20000" />
+        <property name="testQuery" value="select 1 from dual" />
+    </bean>
+
+    <bean id="read_dataSource" class="com.atomikos.jdbc.nonxa.AtomikosNonXADataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="motionuser" />
+        <property name="driverClassName" value="${read.driverClassName}" />
+        <property name="url" value="${read.url}" />
+        <property name="user" value="${read.username}" />
+        <property name="password" value="${read.password}" />
+        <property name="poolSize" value="5" />
+
+        <property name="minPoolSize" value="5" />
+        <property name="maxPoolSize" value="20" />
+        <property name="maxIdleTime" value="60" />
+        <property name="reapTimeout" value="20000" />
+        <property name="testQuery" value="select 1 from dual" />
+    </bean>
+
+    <bean id="paginationIntercepter" class="com.beta.prop.pagination.PaginationIntercepter"><!-- 自动分页插件 -->
+        <property name="dialect">
+            <bean class="com.beta.prop.pagination.dialect.OracleDialect"></bean>
+        </property>
+        <property name="pageSqlId" value=".*getListFor.*" />
+    </bean>
+    
+    
+    <bean id="mysqlSessionFactory_one" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="financial_dataSource" />
+        <property name="mapperLocations" value="classpath*:com/beta/app/table/**/*.xml"/>
+        <property name="plugins"><!-- 注入分页插件 -->
+            <array>
+                <ref bean="paginationIntercepter"/>
+            </array>
+        </property>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.beta.app.table.**.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="mysqlSessionFactory_one"/>
+    </bean>
+
+    <bean id="mysqlSessionFactory_two" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="read_dataSource" />
+        <property name="mapperLocations" value="classpath*:com/beta/app/remote/**/*.xml"/>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.beta.app.remote.**.dao"/>
+        <property name="sqlSessionFactoryBeanName" value="mysqlSessionFactory_two"/>
+    </bean>
+
+
+    <!-- 事务配置 -->
+    <bean id="userTransactionService" class="com.atomikos.icatch.config.UserTransactionServiceImp"
+          init-method="init" destroy-method="shutdownForce">
+        <constructor-arg>
+            <props>
+                <prop key="com.atomikos.icatch.service">com.atomikos.icatch.standalone.UserTransactionServiceFactory</prop>
+            </props>
+        </constructor-arg>
+    </bean>
+
+    <bean id="atomikosTransactionManager" class="com.atomikos.icatch.jta.UserTransactionManager"  init-method="init" destroy-method="close" depends-on="userTransactionService">
+        <property name="forceShutdown" value="false" />
+    </bean>
+    <bean id="atomikosUserTransaction" class="com.atomikos.icatch.jta.UserTransactionImp" depends-on="userTransactionService">
+        <property name="transactionTimeout" value="600" />
+    </bean>
+    <bean id="jtaTransactionManager"  class="org.springframework.transaction.jta.JtaTransactionManager"   depends-on="userTransactionService">
+        <property name="transactionManager" ref="atomikosTransactionManager" />
+        <property name="userTransaction" ref="atomikosUserTransaction" />
+    </bean>
+
+
+    <tx:annotation-driven transaction-manager="jtaTransactionManager"   proxy-target-class="true"/>
+</beans>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.beta.app.remote.dao.RemoteDao">
+
+<!--     <select  id="getBatchInforToSyn"   parameterType="java.util.Map"  resultType="com.beta.app.remote.entity.BatchChargeEntity">
+            SELECT ri.pri_number AS priNumber ,ri.request_no AS requestNo ,
+                   ri.batch_no AS batchNo  , ri.interface_content AS interfaceContent,
+                   ri.create_date  AS createDate , ri.create_name AS createName
+            FROM clspuser.zj_batch_repay_interface_log  ri 
+            WHERE  1=1 
+            and  ri.request_no = '4'
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(ri.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+            <if  test="parameter.exBatchList != null  ">
+                 AND NOT EXISTS (
+                    SELECT priNumber AS priNumber FROM
+                    
+                    <foreach item="item" index="index" collection="parameter.exBatchList" 
+                         open="(" separator="union all" close=")  listData" > 
+                         select  #{item}  as  priNumber  from dual
+                </foreach>
+                
+                    where ri.pri_number =listData.priNumber
+                    
+                 )
+            </if>
+             
+    </select> -->
+    
+    
+        <select  id="getBatchInforToSyn"   parameterType="java.util.Map"  resultType="com.beta.app.remote.entity.BatchChargeEntity">
+
+            SELECT      r.pri_number  AS priNumber  ,      r.batch_no   AS batchNo ,
+                                con.interface_content AS interfaceContent  , '4' as requestNo ,
+                                r.create_date AS createDate  ,r.create_name  AS createName
+            FROM clspuser.zj_batch_record r
+            LEFT JOIN 
+            (SELECT ril.batch_no , ril.interface_content
+            FROM CLSPUSER.ZJ_BATCH_REPAY_INTERFACE_LOG ril
+            WHERE ril.request_no = '4' AND  EXISTS (
+               SELECT  gri.batchNo  
+               FROM   (SELECT zb.batch_no AS batchNo , max(zb.create_date)  AS maxCreateDate ,MAX(zb.pri_number) AS maxPriNumber
+               FROM CLSPUSER.ZJ_BATCH_REPAY_INTERFACE_LOG zb
+               WHERE zb.request_no = '4'
+               GROUP BY zb.batch_no) gri
+               WHERE ril.batch_no = gri.batchNo AND ril.create_date = gri.maxCreateDate AND ril.pri_number = gri.maxPriNumber
+            )) con
+            ON r.batch_no = con.batch_no
+            WHERE  1=1
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(r.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+            <if  test="parameter.exBatchList != null  ">
+                 AND NOT EXISTS (
+                    SELECT priNumber AS priNumber FROM
+                    
+                    <foreach item="item" index="index" collection="parameter.exBatchList" 
+                         open="(" separator="union all" close=")  listData" > 
+                         select  #{item}  as  priNumber  from dual
+                </foreach>
+                
+                    where r.pri_number =listData.priNumber
+                    
+                 )
+            </if>
+             
+    </select>
+    
+    
+    <select  id="getSingleInforToSyn"   parameterType="java.util.Map"  resultType="com.beta.app.remote.entity.SingleChargeEntity">
+            SELECT li.pri_number  AS priNumber , li.loan_contract_no  AS loanContractNo ,
+                   li.seq AS seq , li.interface_content AS interfaceContent ,
+                   li.create_date AS  createDate , li.create_name AS createName ,
+                   li.status  AS status ,DN.NODE_NAME AS branchOrg ,
+                   pi.loan_name AS loanName
+            FROM clspuser.interface_log li
+            LEFT JOIN CLSPUSER.Crf_P2p_Account_Info pi
+          ON li.loan_contract_no = pi.loan_contract_no
+          LEFT JOIN CLSPUSER.Dim_Node dn
+          ON pi.area_no = dn.node_no AND dn.tree_id='AREA'
+            WHERE  1=1 
+            <if  test="parameter.synDate != null  and  parameter.synDate != '' ">
+            AND  to_char(li.create_date,'yyyy-mm-dd') = #{parameter.synDate}
+            </if>
+            <if  test="parameter.exSingleList != null  ">
+                 
+                 AND NOT EXISTS (
+                    SELECT priNumber AS priNumber FROM
+                    
+                    <foreach item="item" index="index" collection="parameter.exSingleList" 
+                         open="(" separator="union all" close=")  listData" > 
+                         select  #{item}  as  priNumber  from dual
+                </foreach>
+                
+                    where li.pri_number =listData.priNumber
+                    
+                 )
+                 
+            </if>
+    </select>
+    
+    <select id="getLoanOrgIinfor"   parameterType="java.lang.String"   resultType="java.lang.String">
+        
+        SELECT dn.node_name AS branchOrg
+        FROM  CLSPUSER.Crf_P2p_Account_Info pi
+        LEFT JOIN CLSPUSER.Dim_Node dn
+        ON pi.area_no = dn.node_no AND dn.tree_id='AREA'
+        WHERE pi.loan_contract_no = #{loanNo}
+        
+        
+    </select>
+    
+    <select id="getLoanNoAndOrg"  parameterType="java.util.List"   resultType="com.beta.app.table.entity.LoanNoAndOrg">
+        SELECT pi.loan_contract_no as loanNo   , dn.node_name AS branchOrg
+        FROM  CLSPUSER.Crf_P2p_Account_Info pi
+        LEFT JOIN CLSPUSER.Dim_Node dn
+        ON pi.area_no = dn.node_no AND dn.tree_id='AREA'
+        WHERE  EXISTS (
+                    SELECT loanNo AS loanNo FROM
+                    
+                    <foreach item="item" index="index" collection="loanNoList" 
+                         open="(" separator="union all" close=")  listData" > 
+                         select  #{item}  as  loanNo  from dual
+                </foreach>
+                
+                    where pi.loan_contract_no =listData.loanNo
+                    
+                 )
+        
+    </select>
+</mapper>
