@@ -57,7 +57,7 @@
                             <label for="dtp_input2" >划扣日期</label>
                             <div class="input-group date form_date col-md-5" data-date="" data-date-format="yyyy-mm-dd" data-link-field="dtp_input2" data-link-format="yyyy-mm-dd">
                                 <input class="form-control" id="synDate"  name="synDate" size="16" type="text" style="width: 140px;" readonly>
-                                <span class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
+                                <span  class="input-group-addon"><span class="glyphicon glyphicon-remove"></span></span>
                                 <span class="input-group-addon"><span class="glyphicon glyphicon-calendar"></span></span>
                             </div>
                             <input type="hidden" id="dtp_input2"  /><br/>
@@ -125,7 +125,7 @@
                queryData.push({name:'currentPage' , value: page.currentPage});
                queryData.push({name:'limit' , value: page.limit});
                $.ajax({
-                   url:"http://192.168.6.21:8080/report/action/charge/info",
+                   url:"http://192.168.18.42:8080/report/action/charge/info",
                    method:"post",
                    data:queryData,
                    dataType:"json"
@@ -139,7 +139,7 @@
            getMenuData = function(menuList){
                
                $.ajax({
-                   url:"http://192.168.6.21:8080/report/action/tablecontroller/menuinfor",
+                   url:"http://192.168.18.42:8080/report/action/tablecontroller/menuinfor",
                    method:"post",
                    dataType:"json"
                }).success(menuList).error(function(){
@@ -234,7 +234,7 @@
              //导出数据
              exportDataByButton  =  function(){
                  var synDate = $("#synDate").val();
-                 window.open("http://192.168.6.21:8080/report/action/charge/export?synDate="+synDate);
+                 window.open("http://192.168.18.42:8080/report/action/charge/export?synDate="+synDate);
              };
              
              var loading = 0;
@@ -243,7 +243,7 @@
                  var info = {synDate:$("#synDate").val()};
                  loading = layer.load(0, {shade: false});
                  $.ajax({
-                     url:"http://192.168.6.21:8080/report/action/charge/syn",
+                     url:"http://192.168.18.42:8080/report/action/charge/syn",
                      method:"post",
                      data:info,
                      dataType:"json"
@@ -314,7 +314,7 @@
                  var info = {synDate:$("#synDate").val()};
                  loading = layer.load(0, {shade: false});
                  $.ajax({
-                     url:"http://192.168.6.21:8080/report/action/charge/reslove",
+                     url:"http://192.168.18.42:8080/report/action/charge/reslove",
                      method:"post",
                      data:info,
                      dataType:"json"

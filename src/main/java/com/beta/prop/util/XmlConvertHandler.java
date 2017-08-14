@@ -25,7 +25,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import com.beta.app.table.entity.BfSingleCharge;
 
 
 

@@ -1,5 +1,6 @@
 package com.beta.app.table.entity;
 
+
 public class ChargeInfor {
 
     private  String  id;
@@ -44,6 +45,8 @@ public class ChargeInfor {
         this.loanName = loanName;
     }
 
+
+
     public String getChargeDate() {
         return chargeDate;
     }
@@ -51,8 +54,6 @@ public class ChargeInfor {
     public void setChargeDate(String chargeDate) {
         this.chargeDate = chargeDate;
     }
-
-
 
     public String getChargeResult() {
         return chargeResult;

@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.beta.app.table.dao.TableDao">
 
-    <select  id="getListForChargeInfor"   parameterType="java.util.Map"  resultType="com.beta.app.table.entity.ChargeInfor">
+<!--     <select  id="getListForChargeInfor"   parameterType="java.util.Map"  resultType="com.beta.app.table.entity.ChargeInfor">
         SELECT ID AS id  ,rri.loan_no AS loanNo ,rri.loan_name AS  loanName,
             rri.charge_date AS chargeDate ,rri.charge_result AS chargeResult,
             rri.charge_lose_reason AS chargeLoseReason, rri.charge_channel AS chargeChannel,
@@ -12,7 +12,32 @@
         <if test="parameter.synDate != null and  parameter.synDate !='' ">
             and charge_date like '%'|| #{parameter.synDate} ||'%'
         </if>
+    </select> -->
+    
+    <select id="getListForChargeInfor"   parameterType="java.util.Map"  resultType="com.beta.app.table.entity.ChargeInfor">
+        SELECT ID AS id  ,rri.loan_no AS loanNo ,rri.loan_name AS  loanName,
+            rri.charge_result AS chargeResult,
+            rri.charge_lose_reason AS chargeLoseReason, rri.charge_channel AS chargeChannel,
+            rri.source_table AS chargeType , rri.branch_org as branchOrg ,
+            nvl2(rri.charge_date ,SUBSTR(rri.charge_date,1,4)||'-'||SUBSTR(rri.charge_date,5,2)||'-'||SUBSTR(rri.charge_date,7,2)||' '||SUBSTR(rri.charge_date,9,2)||':'||SUBSTR(rri.charge_date,11,2)||':'||SUBSTR(rri.charge_date,13,2) ,NULL) AS chargeDate
+        FROM REPORT_RESLOVE_INFO rri
+        <if test="parameter.synDate != null and  parameter.synDate !='' ">
+        JOIN (SELECT ri.loan_no AS loanNo ,MAX(ri.charge_date) AS chargeDate
+        FROM REPORT_RESLOVE_INFO ri
+        WHERE  nvl2(ri.charge_date ,substr(ri.charge_date, 0, 8) , ''  ) LIKE '%'|| #{parameter.synDate} ||'%'
+        GROUP BY  ri.loan_no) listData
+        ON rri.loan_no = listData.loanNo AND rri.charge_date = listData.chargeDate
+        </if>
+        where 1=1      
+        
+        <if test="parameter.synDate != null and  parameter.synDate !='' ">
+        and nvl2(charge_date ,substr(charge_date, 0, 8) , ''  ) LIKE '%'|| #{parameter.synDate} ||'%'
+        </if>
+        
+        ORDER BY  rri.charge_channel DESC,  rri.charge_date
     </select>
+    
+    
     
     
     <select  id="getBatchSynedInfor"   parameterType="java.util.Map"  resultType="java.lang.String">
@@ -136,12 +161,12 @@
                        
                 VALUES
                 (
-                    sys_guid() ,    #{item.itemNo}  ,   #{item.accountName} ,
-                    #{item.bankTxTime}  , #{item.status}   ,
-                    #{item.responseMessage} ,    #{item.chargeChannel}   ,
-                    #{item.accountNumber}   ,  #{item.amount}    ,
-                    #{item.branchOrg}    , 'REPORT_ZJ_BATCH_BACUK' ,SYSDATE ,
-                    #{item.chargeCode}
+                    sys_guid() ,    #{item.itemNo,jdbcType=VARCHAR}  ,   #{item.accountName,jdbcType=VARCHAR} ,
+                    #{item.bankTxTime,jdbcType=VARCHAR}  , #{item.status,jdbcType=VARCHAR}   ,
+                    #{item.responseMessage,jdbcType=VARCHAR} ,    #{item.chargeChannel,jdbcType=VARCHAR}   ,
+                    #{item.accountNumber,jdbcType=VARCHAR}   ,  #{item.amount,jdbcType=VARCHAR}    ,
+                    #{item.branchOrg,jdbcType=VARCHAR}    , 'REPORT_ZJ_BATCH_BACUK' ,SYSDATE ,
+                    #{item.chargeCode,jdbcType=VARCHAR}
                 )
        </foreach>
         
@@ -165,7 +190,7 @@
                     #{item.bankTxTime ,jdbcType=VARCHAR}  , #{item.status ,jdbcType=VARCHAR}   ,
                     #{item.responseMessage ,jdbcType=VARCHAR} ,    #{item.chargeChannel ,jdbcType=VARCHAR}   ,
                     #{item.branchOrg ,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK' ,SYSDATE ,
-                    #{item.chargeCode}
+                    #{item.chargeCode,jdbcType=VARCHAR}
                 )
        </foreach>
         
@@ -189,7 +214,7 @@
                     #{item.succTime,jdbcType=VARCHAR}  , #{item.respCode,jdbcType=VARCHAR}   ,
                     #{item.respMsg,jdbcType=VARCHAR} ,    #{item.chargeChannel,jdbcType=VARCHAR}   ,
                     #{item.branchOrg,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK'  ,  SYSDATE ,
-                    #{item.chargeCode}
+                    #{item.chargeCode,jdbcType=VARCHAR}
                 )
        </foreach>
         
@@ -213,7 +238,7 @@
                     #{item.trade_date,jdbcType=VARCHAR}  , #{item.resp_code,jdbcType=VARCHAR}   ,
                     #{item.resp_msg,jdbcType=VARCHAR} ,    #{item.chargeChannel,jdbcType=VARCHAR}   ,
                     #{item.branchOrg,jdbcType=VARCHAR}    , 'REPORT_INTERFACE_LOG_BACK'  ,  SYSDATE ,
-                    #{item.chargeCode}
+                    #{item.chargeCode,jdbcType=VARCHAR}
                 )
        </foreach>
         

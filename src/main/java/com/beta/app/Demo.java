@@ -11,7 +11,7 @@ import java.util.Set;
 import com.beta.prop.proxy.ProxyDemo;
 
 public class Demo  extends ProxyDemo{
-    Demo() {
+     Demo() {
         super();
     }
 

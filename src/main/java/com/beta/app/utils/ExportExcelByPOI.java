@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.poi.hssf.usermodel.HSSFCellStyle;
@@ -217,6 +218,14 @@ public class ExportExcelByPOI {
     public void wirteExcel(String titleColumn[], String titleName[], int[] widthList, List<?> dataList) {
         // 添加Worksheet（不添加sheet时生成的xls文件打开时会报错)
         Sheet sheet = workbook.createSheet(this.sheetName);
+        //日期处理
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        //日期样式
+        HSSFCellStyle dateCellStyle=workbook.createCellStyle(); 
+        //设置显示类型
+        short df=workbook.createDataFormat().getFormat("yyyy-MM-dd HH:mm:ss");
+        //样式设置
+        dateCellStyle.setDataFormat(df);
         // 新建文件
         OutputStream out = null;
         try {
@@ -282,6 +291,10 @@ public class ExportExcelByPOI {
                                         cell.setCellValue(floatDecimalFormat.format(Float.parseFloat(data)));
                                     } else if ("double".equals(returnType)) {
                                         cell.setCellValue(doubleDecimalFormat.format(Double.parseDouble(data)));
+                                    } else if ("java.util.Date".equals(returnType)) {
+                                        cell.setCellType(Cell.CELL_TYPE_NUMERIC);
+                                        cell.setCellValue(sdf.parse(data));
+                                        cell.setCellStyle(dateCellStyle);
                                     } else {
                                         cell.setCellValue(data);
                                     }

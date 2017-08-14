@@ -15,6 +15,7 @@ import org.apache.ibatis.session.RowBounds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.alibaba.fastjson.JSON;
 import com.beta.app.remote.dao.RemoteDao;
@@ -97,7 +98,12 @@ public class TableService {
         //获取到需要同步的批扣数据
         List<BatchChargeEntity>  synBatchCharge  =  this.remoteDao.getBatchInforToSyn(parameter);
         if(synSingleCharge!= null && synSingleCharge.size() !=0){
-            this.tableDao.insertSynSingleInfor(synSingleCharge);
+            List<List<SingleChargeEntity>>  array = splitList(synSingleCharge );
+            if(array != null && array.size() >0){
+                for(List<SingleChargeEntity> temp :array ){
+                    this.tableDao.insertSynSingleInfor(temp);
+                }
+            }
         }
         if(synBatchCharge!= null && synBatchCharge.size() !=0){
             this.tableDao.insertSynBatchInfor(synBatchCharge);
@@ -117,6 +123,7 @@ public class TableService {
      * @return: SynDataMessage      
      * @throws
      */
+    @Transactional
     public  SynDataMessage  resloveChargeInfo(Map<String , Object>  parameter){
         
         SynDataMessage  sdm = new SynDataMessage();
@@ -226,33 +233,59 @@ public class TableService {
     
     public  void  updateBatchChargeInfor(List<ZjBatchChargeInfor>  zjBatchAllInfor ,List<BatchChargeEntity>  resloveBatchList){
         if(zjBatchAllInfor != null && zjBatchAllInfor.size()>0){
-            this.tableDao.insertBatchResloveData(zjBatchAllInfor);
+            List<List<ZjBatchChargeInfor>>  all = splitList(zjBatchAllInfor);
+            if(all != null && all.size()>0){
+                for(List<ZjBatchChargeInfor> temp : all)
+                 this.tableDao.insertBatchResloveData(temp);
+            }
         }
         if(resloveBatchList!=null && resloveBatchList.size()>0){
-            this.tableDao.updateBatchResloveFlag(resloveBatchList);
+            
+            List<List<BatchChargeEntity>>  all = splitList(resloveBatchList);
+            if(all != null && all.size()>0){
+                for(List<BatchChargeEntity> temp : all){
+                    this.tableDao.updateBatchResloveFlag(temp);
+                }
+            }
         }
-        
     }
     
     public void updateSingleChargeInfor(List<SingleChargeEntity>  resloveSingleList , List<ZjSingleCharge>  zjSingle ,List<AnSingleCharge>  anSingle  ,List<BfSingleCharge>  bfSingle){
         if(zjSingle != null && zjSingle.size()>0){
-            this.tableDao.insertZjSingleCharge(zjSingle);
-            
+        	List<List<ZjSingleCharge>>  all = splitList(zjSingle);
+            if(all != null && all.size()>0){
+                for(List<ZjSingleCharge> temp : all){
+                    this.tableDao.insertZjSingleCharge(temp);
+                }
+            }
         }
         
         if(anSingle != null && anSingle.size()>0){
-          this.tableDao.insertAnSingleCharge(anSingle);
-                    
+        	
+        	List<List<AnSingleCharge>>  all = splitList(anSingle);
+            if(all != null && all.size()>0){
+                for(List<AnSingleCharge> temp : all){
+                    this.tableDao.insertAnSingleCharge(temp);
+                }
+            }
         }
         
         if(bfSingle != null && bfSingle.size()>0){
-            this.tableDao.insertBfSingleCharge(bfSingle);
-            
+            List<List<BfSingleCharge>>  all = splitList(bfSingle);
+            if(all != null && all.size()>0){
+                for(List<BfSingleCharge> temp : all){
+                    this.tableDao.insertBfSingleCharge(temp);
+                }
+            }
         }
         
         if(resloveSingleList != null && resloveSingleList.size()>0){
-            this.tableDao.updateSingleResloveFlag(resloveSingleList);
-            
+        	List<List<SingleChargeEntity>>  all = splitList(resloveSingleList);
+            if(all != null && all.size()>0){
+                for(List<SingleChargeEntity> temp : all){
+                    this.tableDao.updateSingleResloveFlag(temp);
+                }
+            }
         }
     }
     
@@ -262,6 +295,30 @@ public class TableService {
         result = this.tableDao.getMenuInfor();
         
         return result;
+    }
+    
+    
+   public  <T> List<List<T>>  splitList(List<T>  source){
+       List<List<T>> result = null;
+       if(source == null || source.isEmpty()){
+           return result;
+       }
+       result = new ArrayList<>();
+       int loopCount = (source.size()-1)/2000 +1;
+       for(int i = 1 ; i <=loopCount ;i++){
+           List<T>  temp = null;
+           
+           if(i !=loopCount){
+               temp = source.subList((i-1)*2000, 2000*i);
+           }else{
+               temp = source.subList((i-1)*2000, source.size());
+           }
+           if( temp!= null &&  temp.size()>0){
+               result.add(temp);
+           }
+       }
+       return result;
         
     }
+    
 }
